@@ -1,0 +1,22 @@
+[package]
+name = "png-cleaner"
+version = "0.3.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Transform yaml, json, pkl files to wolfram"
+repository = "https://github.com/GalAster/wolfram-exchange"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2018"
+
+[[bin]]
+name = "pngc"
+path = "src/main.rs"
+
+[dependencies]
+clap = "2.27"
+png  = "0.16"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+panic = 'abort'
