@@ -1,4 +1,6 @@
-use std::io::ErrorKind;
+use png::DecodingError;
+use std::{io::ErrorKind, option::NoneError};
+use glob::{GlobError, PatternError};
 
 #[derive(Debug)]
 pub enum Error {
@@ -7,6 +9,7 @@ pub enum Error {
     PermissionDenied,
     UnknownIOError,
     ParseFailed,
+    InvalidGlob
 }
 
 impl From<std::io::Error> for Error {
@@ -19,8 +22,27 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl From<std::option::NoneError> for Error {
-    fn from(_: std::option::NoneError) -> Self {
+impl From<NoneError> for Error {
+    fn from(_: NoneError) -> Self {
         Error::NullException
+    }
+}
+
+impl From<DecodingError> for Error {
+    fn from(_: DecodingError) -> Self {
+        Error::ParseFailed
+    }
+}
+
+
+impl From<GlobError> for Error {
+    fn from(_: GlobError) -> Self {
+        Error::InvalidGlob
+    }
+}
+
+impl From<PatternError> for Error {
+    fn from(_: PatternError) -> Self {
+        Error::InvalidGlob
     }
 }

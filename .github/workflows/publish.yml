@@ -14,14 +14,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: wex
-            asset_name: wex-linux-amd64
+            artifact_name: pngc
+            asset_name: pngc-linux-amd64
           - os: windows-latest
-            artifact_name: wex.exe
-            asset_name: wex-win-amd64.exe
+            artifact_name: pngc.exe
+            asset_name: pngc-win-amd64.exe
           - os: macos-latest
-            artifact_name: wex
-            asset_name: wex-mac-amd64
+            artifact_name: pngc
+            asset_name: pngc-mac-amd64
 
     steps:
       - uses: hecrj/setup-rust-action@v1

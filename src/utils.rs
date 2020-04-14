@@ -1,45 +1,45 @@
-use crate::error::Error;
-use png::{BitDepth, ColorType, OutputInfo};
-use std::{fs::File, io::Write};
+use std::{fs, fs::File, io::Write, os::macos::fs::MetadataExt};
 
-/*
-pub fn parse_file(path: &str, format: Option<&str>) -> Result<WolframValue, Error> {
-    let s = fs::read_to_string(path)?;
-    let suffix = match format {
-        Some(s) => s,
-        None => path.split('/').last()?.split('.').last()?,
-    };
-    let format = match suffix.to_lowercase().as_str() {
-        "yml" | "yaml" => SupportedFormat::YAML,
-        "json" => SupportedFormat::JSON,
-        _ => SupportedFormat::TOML,
-    };
-    println!("Parsing the file {} as {:?}", path, format);
-    match format {
-        SupportedFormat::JSON => parse_json(&s).map_err(|_| Error::ParseFailed),
-        SupportedFormat::TOML => parse_toml(&s).map_err(|_| Error::ParseFailed),
-        SupportedFormat::YAML => parse_yaml(&s).map_err(|_| Error::ParseFailed),
-        SupportedFormat::Pickle => unimplemented!(),
+use png::{BitDepth, ColorType, OutputInfo};
+
+use crate::Error;
+
+#[derive(Clone, Debug)]
+pub struct PNG {
+    pub path: Box<str>,
+    pub size: u64,
+    pub ratio: f32,
+}
+
+impl PNG {
+    pub fn new(path: &str) -> Self {
+        Self { path: Box::from(path), size: 0, ratio: -1.0 }
+    }
+
+    pub fn size_ratio(&mut self) -> Result<(), Error> {
+        let (info, _) = png::Decoder::new(File::open(&*self.path)?).read_info()?;
+        self.size = fs::metadata(&*self.path)?.st_size();
+        self.ratio = *&self.size as f32/ estimate_size(&info);
+        return Ok(());
     }
 }
-*/
 
-pub fn round_size(info: &OutputInfo) -> u32 {
-    let w = info.width;
-    let h = info.height;
+pub fn estimate_size(info: &OutputInfo) -> f32 {
+    let w = info.width as f32;
+    let h = info.height as f32;
     let b = match info.bit_depth {
-        BitDepth::One => 1,
-        BitDepth::Two => 2,
-        BitDepth::Four => 4,
-        BitDepth::Eight => 8,
-        BitDepth::Sixteen => 16,
+        BitDepth::One => 0.125,
+        BitDepth::Two => 0.25,
+        BitDepth::Four => 0.5,
+        BitDepth::Eight => 1.0,
+        BitDepth::Sixteen => 2.0,
     };
     let d = match info.color_type {
-        ColorType::Grayscale => 1,
-        ColorType::RGB => 3,
-        ColorType::Indexed => 1,
-        ColorType::GrayscaleAlpha => 1,
-        ColorType::RGBA => 4,
+        ColorType::Grayscale => 1.0,
+        ColorType::RGB => 3.0,
+        ColorType::Indexed => 1.0,
+        ColorType::GrayscaleAlpha => 1.0,
+        ColorType::RGBA => 4.0,
     };
     return w * h * b * d;
 }

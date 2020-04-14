@@ -1,22 +1,24 @@
 #![feature(try_trait)]
 extern crate clap;
 
+use clap::{App, Arg};
+
+pub use error::Error;
+
+use crate::utils::{PNG, write_to_file};
+
 mod error;
 pub mod utils;
 
-use crate::utils::{round_size, write_to_file};
-use clap::{App, Arg};
-use error::Error;
-
 fn main() -> Result<(), Error> {
     #[rustfmt::skip]
-        let matches = App::new("Wolfram Format Converter")
+        let matches = App::new("PNG Cleaner")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(Arg::with_name("INPUT")
             .help("Sets the input file to use")
-        .required(true)
+            .required(true)
             .index(1))
         .arg(Arg::with_name("Text")
             .short("t")
@@ -65,27 +67,19 @@ fn main() -> Result<(), Error> {
 
 
 #[cfg(test)]
-mod test{
-    use std::fs::File;
-    use crate::utils::round_size;
+mod test {
+    use glob::glob;
+
+    use crate::Error;
 
     #[test]
-    fn test() {
-        // The decoder is a build for reader and can be used to set various decoding options
-        // via `Transformations`. The default output transformation is `Transformations::EXPAND
-        // | Transformations::STRIP_ALPHA`.
-        let decoder = png::Decoder::new(File::open("tests/A9EF29DF-306B-43D4-80CD-ED38F1028AA8.png").unwrap());
-        let (info, mut reader) = decoder.read_info().unwrap();
-        // Allocate the output buffer.
-        println!("{:?}", round_size(&info));
-
-        let mut buf = vec![0; info.buffer_size()];
-        // Read the next frame. An APNG might contain multiple frames.
-        reader.next_frame(&mut buf).unwrap();
-        // Inspect more details of the last read frame.
-        let in_animation = reader.info().frame_control.is_some();
+    fn test() -> Result<(), Error> {
+        let mut dir = "tests".to_string();
+        dir.push_str("/*.png");
+        for entry in glob(&dir)? {
+            println!("{}", entry?.display());
+        }
+        Ok(())
     }
-
-
 }
 

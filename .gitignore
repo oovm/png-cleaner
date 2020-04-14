@@ -6,3 +6,4 @@
 # Rust
 target/
 Cargo.lock
+tests/**/*.png
