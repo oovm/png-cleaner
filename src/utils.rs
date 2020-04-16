@@ -1,8 +1,6 @@
-use std::{fs, fs::File, io::Write, os::macos::fs::MetadataExt};
-
-use png::{BitDepth, ColorType, OutputInfo};
-
 use crate::Error;
+use png::{BitDepth, ColorType, OutputInfo};
+use std::{fs, fs::File, io::Write, os::macos::fs::MetadataExt};
 
 #[derive(Clone, Debug)]
 pub struct PNG {
@@ -19,7 +17,7 @@ impl PNG {
     pub fn size_ratio(&mut self) -> Result<(), Error> {
         let (info, _) = png::Decoder::new(File::open(&*self.path)?).read_info()?;
         self.size = fs::metadata(&*self.path)?.st_size();
-        self.ratio = *&self.size as f32/ estimate_size(&info);
+        self.ratio = *&self.size as f32 / estimate_size(&info);
         return Ok(());
     }
 }
