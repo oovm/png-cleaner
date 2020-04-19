@@ -1,81 +1,56 @@
 #![feature(try_trait)]
-extern crate clap;
 
-use std::fs;
-use std::fs::File;
-use std::os::macos::fs::MetadataExt;
+use std::{fs, fs::File, os::macos::fs::MetadataExt};
+use std::io::Write;
 
+#[allow(unused_imports)]
 use clap::{App, Arg};
+use glob::glob;
 use serde::Deserialize;
 use toml;
 
 pub use error::Error;
 
-use crate::utils::{estimate_size, PNG, write_to_file};
+#[allow(unused_imports)]
+use crate::utils::{estimate_size, PNG};
 
 mod error;
 pub mod utils;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
-    glob: Option<String>,
-    pub min_size: Option<u64>,
-    pub min_ratio: Option<f32>,
+    pub glob: String,
+    pub min_size: u64,
+    pub min_ratio: f32,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self { glob: Some(String::from("**/*.png")), min_size: Some(0), min_ratio: Some(1.0) }
+        Self { glob: String::from("**/*.png"), min_size: 1024 * 1024 * 4, min_ratio: 1.0 }
     }
 }
 
 fn main() -> Result<(), Error> {
-    #[rustfmt::skip]
-        let matches = App::new("PNG Cleaner")
+    App::new("PNG Cleaner")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
-        .arg(Arg::with_name("INPUT")
-            .help("Sets the input file to use")
-            .required(false)
-            .index(1))
-        .arg(Arg::with_name("Text")
-            .short("t")
-            .long("text")
-            .help("Generates m file")
-            .multiple(true)
-            .takes_value(false))
-        .arg(Arg::with_name("Binary")
-            .short("b")
-            .long("binary")
-            .help("Generates wxf file")
-            .multiple(true)
-            .takes_value(false))
-        .arg(Arg::with_name("Compress")
-            .short("c")
-            .long("compress")
-            .help("Generates mx file")
-            .multiple(true)
-            .takes_value(false))
-        .arg(Arg::with_name("File Format")
-            .short("f")
-            .long("format")
-            .value_name("Format")
-            .help("Sets the input file format")
-            .takes_value(true))
         .get_matches();
-    let cfg: Config = toml::from_slice(&fs::read("pngc.toml")?)?;
-    println!("{:?}", cfg);
-
-    let mut dir = "tests".to_string();
-    dir.push_str("/*.png");
-    for entry in glob(&dir)? {
+    let cfg: Config = match toml::from_slice(&fs::read("pngc.toml")?) {
+        Ok(o) => o,
+        Err(_) => Config::default(),
+    };
+    let mut file = File::create("pngc.csv")?;
+    file.write_all("路径,大小(MB),异常等级".as_bytes())?;
+    for entry in glob(&cfg.glob)? {
         let path = &entry?.to_path_buf();
         let (info, _) = png::Decoder::new(File::open(path)?).read_info()?;
         let size = fs::metadata(path)?.st_size();
         let ratio = size as f32 / estimate_size(&info);
         if size > cfg.min_size || ratio > cfg.min_ratio {
-            println!("{:?}", PNG { path: Box::from(path.to_str()?), size, ratio });
+            //println!("{:?}", PNG { path: Box::from(path.to_str()?), size, ratio });
+            let w = format!("{},{},{}\n", path.to_str().unwrap_or_default(), size / 1024, ratio);
+            file.write_all(w.as_bytes())?;
         }
     }
     Ok(())
@@ -96,19 +71,4 @@ fn main() -> Result<(), Error> {
         _ => write_to_file(&format!("{}.mx", input), &value.to_compressed())?,
     };
     */
-}
-
-#[cfg(test)]
-mod test {
-    use std::{fs, fs::File, os::macos::fs::MetadataExt};
-
-    use glob::glob;
-
-    use crate::{
-        Error,
-        utils::{estimate_size, PNG},
-    };
-
-    #[test]
-    fn test() -> Result<(), Error> {}
 }
