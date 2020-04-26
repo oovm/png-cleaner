@@ -1,7 +1,6 @@
 #![feature(try_trait)]
 
-use std::{fs, fs::File, os::macos::fs::MetadataExt};
-use std::io::Write;
+use std::{fs, fs::File, io::Write};
 
 #[allow(unused_imports)]
 use clap::{App, Arg};
@@ -12,7 +11,7 @@ use toml;
 pub use error::Error;
 
 #[allow(unused_imports)]
-use crate::utils::{estimate_size, PNG};
+use crate::utils::{check_file, estimate_size, PNG};
 
 mod error;
 pub mod utils;
@@ -41,15 +40,9 @@ fn main() -> Result<(), Error> {
         Err(_) => Config::default(),
     };
     let mut file = File::create("pngc.csv")?;
-    file.write_all("路径,大小(MB),异常等级".as_bytes())?;
+    file.write_all("路径,大小(MB),异常等级\n".as_bytes())?;
     for entry in glob(&cfg.glob)? {
-        let path = &entry?.to_path_buf();
-        let (info, _) = png::Decoder::new(File::open(path)?).read_info()?;
-        let size = fs::metadata(path)?.st_size();
-        let ratio = size as f32 / estimate_size(&info);
-        if size > cfg.min_size || ratio > cfg.min_ratio {
-            //println!("{:?}", PNG { path: Box::from(path.to_str()?), size, ratio });
-            let w = format!("{},{},{}\n", path.to_str().unwrap_or_default(), size / 1024, ratio);
+        if let Ok(w) = check_file(entry, &cfg) {
             file.write_all(w.as_bytes())?;
         }
     }

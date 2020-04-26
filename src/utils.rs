@@ -1,6 +1,7 @@
-use crate::Error;
+use crate::{Config, Error};
+use glob::GlobResult;
 use png::{BitDepth, ColorType, OutputInfo};
-use std::{fs, fs::File, io::Write, os::macos::fs::MetadataExt};
+use std::{fs, fs::File, io::Write};
 
 #[derive(Clone, Debug)]
 pub struct PNG {
@@ -16,7 +17,7 @@ impl PNG {
 
     pub fn size_ratio(&mut self) -> Result<(), Error> {
         let (info, _) = png::Decoder::new(File::open(&*self.path)?).read_info()?;
-        self.size = fs::metadata(&*self.path)?.st_size();
+        self.size = fs::metadata(&*self.path)?.len();
         self.ratio = *&self.size as f32 / estimate_size(&info);
         return Ok(());
     }
@@ -47,4 +48,18 @@ pub fn write_to_file(path: &str, bytes: &[u8]) -> Result<(), Error> {
     let mut file = File::create(path)?;
     file.write_all(bytes)?;
     Ok(())
+}
+
+pub fn check_file(entry: GlobResult, cfg: &Config) -> Result<String, Error> {
+    let path = &entry?.to_path_buf();
+    let (info, _) = png::Decoder::new(File::open(path)?).read_info()?;
+    let size = fs::metadata(path)?.len();
+    let ratio = size as f32 / estimate_size(&info);
+    if size > cfg.min_size || ratio > cfg.min_ratio {
+        //println!("{:?}", PNG { path: Box::from(path.to_str()?), size, ratio });
+        return Ok(format!("{},{},{}\n", path.to_str().unwrap_or_default(), size / 1024, ratio));
+    }
+    else {
+        Err(Error::UnknownIOError)
+    }
 }

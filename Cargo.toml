@@ -1,6 +1,6 @@
 [package]
 name = "png-cleaner"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Find abnormal png files"
 repository = "https://github.com/GalAster/png-cleaner"
