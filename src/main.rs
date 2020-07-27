@@ -40,7 +40,7 @@ fn main() -> Result<(), Error> {
         Err(_) => Config::default(),
     };
     let mut file = File::create("pngc.csv")?;
-    file.write_all("路径,大小(MB),异常等级\n".as_bytes())?;
+    file.write_all("路径,大小(KB),异常等级\n".as_bytes())?;
     for entry in glob(&cfg.glob)? {
         if let Ok(w) = check_file(entry, &cfg) {
             file.write_all(w.as_bytes())?;
