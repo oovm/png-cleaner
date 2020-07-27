@@ -47,21 +47,4 @@ fn main() -> Result<(), Error> {
         }
     }
     Ok(())
-    /*
-    let input = matches.value_of("INPUT").unwrap();
-
-    let value = parse_file(input, matches.value_of("File Format"))?;
-    match matches.occurrences_of("Text") {
-        0 => (),
-        _ => write_to_file(&format!("{}.m", input), value.to_string().as_bytes())?,
-    }
-    match matches.occurrences_of("Binary") {
-        0 => (),
-        _ => write_to_file(&format!("{}.wxf", input), &value.to_bytes())?,
-    }
-    match matches.occurrences_of("Compress") {
-        0 => (),
-        _ => write_to_file(&format!("{}.mx", input), &value.to_compressed())?,
-    };
-    */
 }
