@@ -2,8 +2,6 @@
 
 use std::{fs, fs::File, io::Write};
 
-#[allow(unused_imports)]
-use clap::{App, Arg};
 use glob::glob;
 use serde::Deserialize;
 use toml;
@@ -30,15 +28,12 @@ impl Default for Config {
 }
 
 fn main() -> Result<(), Error> {
-    App::new("PNG Cleaner")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .get_matches();
-    let cfg: Config = match toml::from_slice(&fs::read("pngc.toml")?) {
-        Ok(o) => o,
-        Err(_) => Config::default(),
-    };
+    let mut cfg = Config::default();
+    if let Ok(file) = &fs::read("pngc.toml") {
+        if let Ok(o) = toml::from_slice(file) {
+            cfg = o
+        };
+    }
     let mut file = File::create("pngc.csv")?;
     file.write_all("路径,大小(KB),异常等级\n".as_bytes())?;
     for entry in glob(&cfg.glob)? {
